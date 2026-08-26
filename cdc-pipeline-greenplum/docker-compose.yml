@@ -149,6 +149,11 @@ services:
       - ./debezium-connect/postgres-connector.json:/postgres-connector.json:ro
       - ./jdbc-connect/sink-connector.json:/sink-connector.json:ro
     environment:
+      # Harus sama dengan TZ dashboard: dashboard membandingkan timestamp log
+      # merge dengan waktu lokalnya sendiri, jadi beda zona bikin selisihnya
+      # meleset berjam-jam dan status merge job selalu terbaca gagal.
+      TZ: Asia/Jakarta
+
       # Kafka Connect (registry, watchdog) - 2 cluster terpisah
       CONNECTORS_JSON: '[{"name":"cutidev-gp-poc-source","config_file":"/postgres-connector.json","connect_url":"http://debezium-connect:8083"},{"name":"greenplum-gp-poc-sink","config_file":"/sink-connector.json","connect_url":"http://jdbc-connect:8083"}]'
 
