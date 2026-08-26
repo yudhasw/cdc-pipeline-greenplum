@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Status Pipeline CDC</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="loading-overlay" class="hidden">
+    <div class="loader-content">
+      <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>
+      <span class="sr-only">Loading...</span>
+      <p>Memuat data...</p>
+    </div>
+  </div>
+
+  <div id="header">
+    <div id="branding">
+      <h1>CDC Development - Pipeline Health</h1>
+    </div>
+  </div>
+
+  <div class="breadcrumbs"><a href="index.html">Dashboard</a> &rsaquo; <a href="pipeline.html">Pipeline CDC</a></div>
+
+  <div id="content">
+
+    <div class="module">
+      <h2><i class="fa fa-stethoscope"></i>&nbsp;Kesehatan Tiap Lapisan</h2>
+      <div class="module-body">
+        <div id="health-cards" class="chip-row"></div>
+        <div class="text-muted" id="health-checked-at" style="margin-top: 10px; font-size: 11px;"></div>
+      </div>
+    </div>
+
+    <div class="module">
+      <h2><i class="fa fa-bolt"></i>&nbsp;Generator Trafik Uji &amp; Latensi</h2>
+      <div class="module-body">
+        <div style="margin-bottom: 12px;">
+          <button id="gen-start-btn" class="log-tab">Mulai</button>
+          <button id="gen-stop-btn" class="log-tab">Stop</button>
+          <span id="gen-status-badge" class="label label-default" style="margin-left: 8px;"></span>
+        </div>
+        <div id="gen-last-action" class="text-muted" style="font-size: 12px; margin-bottom: 8px;"></div>
+        <div id="gen-latency-cards" class="chip-row"></div>
+      </div>
+    </div>
+
+    <div class="module">
+      <h2><i class="fa fa-file-text-o"></i>&nbsp;Log Container</h2>
+      <div class="module-body">
+        <div id="log-tabs" class="chip-row" style="margin-bottom: 12px;"></div>
+        <pre id="log-view" class="log-box">Memuat...</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="pipeline.js"></script>
+</body>
+</html>

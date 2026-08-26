@@ -1,0 +1,249 @@
+name: cdc-pipeline
+
+networks:
+  cdc-gp_net: {}
+
+services:
+  kafka:
+    image: docker.io/apache/kafka:3.8.0
+    container_name: kafka
+    networks:
+      - cdc-gp_net
+    ports:
+      - "127.0.0.1:9095:9092"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094"
+      KAFKA_LISTENERS: "INTERNAL://:29092,CONTROLLER://:9094,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9095"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      CLUSTER_ID: "gp-poc-cluster-id-01"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+
+  debezium-connect:
+    build:
+      context: ./debezium-connect
+    container_name: debezium-connect
+    networks:
+      - cdc-gp_net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8085:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: gp-poc-debezium-cluster
+      CONFIG_STORAGE_TOPIC: _connect_configs
+      OFFSET_STORAGE_TOPIC: _connect_offsets
+      STATUS_STORAGE_TOPIC: _connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "true"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/ >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  jdbc-connect:
+    build:
+      context: ./jdbc-connect
+    container_name: jdbc-connect
+    networks:
+      - cdc-gp_net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8086:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: gp-poc-jdbc-cluster
+      CONFIG_STORAGE_TOPIC: _connect_configs_jdbc
+      OFFSET_STORAGE_TOPIC: _connect_offsets_jdbc
+      STATUS_STORAGE_TOPIC: _connect_statuses_jdbc
+      CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "true"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/ >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  connector-init:
+    image: curlimages/curl:8.10.1
+    container_name: connector-init
+    networks:
+      - cdc-gp_net
+    depends_on:
+      debezium-connect:
+        condition: service_healthy
+      jdbc-connect:
+        condition: service_healthy
+    volumes:
+      - ./debezium-connect/postgres-connector.json:/postgres-connector.json:ro
+      - ./jdbc-connect/sink-connector.json:/sink-connector.json:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        register() {
+          URL=$$1
+          NAME=$$2
+          FILE=$$3
+          STATUS=$$(curl -s -o /dev/null -w "%{http_code}" "$$URL/connectors/$$NAME")
+          if [ "$$STATUS" = "200" ]; then
+            echo "Connector $$NAME sudah terdaftar di $$URL"
+          else
+            echo "Mendaftarkan $$NAME ke $$URL (HTTP $$STATUS)..."
+            curl -s -X POST -H "Content-Type: application/json" --data @$$FILE "$$URL/connectors"
+            echo
+          fi
+        }
+        register http://debezium-connect:8083 cutidev-gp-poc-source /postgres-connector.json
+        register http://jdbc-connect:8083 greenplum-gp-poc-sink /sink-connector.json
+    restart: "no"
+
+  cdc-service:
+    build:
+      context: ./cdc-service
+    container_name: cdc-service
+    restart: unless-stopped
+    networks:
+      - cdc-gp_net
+    depends_on:
+      debezium-connect:
+        condition: service_healthy
+      jdbc-connect:
+        condition: service_healthy
+    volumes:
+      - ./debezium-connect/postgres-connector.json:/postgres-connector.json:ro
+      - ./jdbc-connect/sink-connector.json:/sink-connector.json:ro
+    environment:
+      # Kafka Connect (registry, watchdog) - 2 cluster terpisah
+      CONNECTORS_JSON: '[{"name":"cutidev-gp-poc-source","config_file":"/postgres-connector.json","connect_url":"http://debezium-connect:8083"},{"name":"greenplum-gp-poc-sink","config_file":"/sink-connector.json","connect_url":"http://jdbc-connect:8083"}]'
+
+      # Source PostgreSQL (schema drift detection)
+      SCHEMA_BACKEND: postgres
+      PG_HOST: ${SOURCE_HOST}
+      PG_PORT: ${SOURCE_PORT}
+      PG_DATABASE: ${SOURCE_DB}
+      PG_USER: ${SOURCE_USER}
+      PG_PASSWORD: ${SOURCE_PASSWORD}
+
+      # Target Greenplum (merge job)
+      TARGET_HOST: ${TARGET_HOST}
+      TARGET_PORT: ${TARGET_PORT}
+      TARGET_DATABASE: ${TARGET_DB}
+      TARGET_USER: ${TARGET_USER}
+      TARGET_PASSWORD: ${TARGET_PASSWORD}
+      TARGET_SCHEMA: ${TARGET_SCHEMA}
+
+      # Merge job configuration
+      ENABLE_DELETED_LOG: "false"
+      TABLES: leave_leavedocument,leave_historyleave,account_user
+      INTERVAL_MERGE: "15"
+      INTERVAL_VACUUM: "3600"
+
+      # Monitoring intervals
+      PIPELINE_METADATA_COLUMNS: __deleted,__op,__source_ts_ms
+      INTERVAL_REGISTRY: "300"
+      INTERVAL_WATCHDOG: "60"
+      INTERVAL_SCHEMA: "300"
+
+  # Asal image Greenplum:
+  #   Versi             : woblerr/greenplum:6.26.4
+  #   Alasan versi ini  : menyamai versi Greenplum di prod (6.26.0) - basis
+  #                       PostgreSQL 9.4.26 cocok persis, GPDB 6.26.4 adalah
+  #                       tag terdekat yang tersedia (prod tidak punya tag
+  #                       6.26.0 persis di image publik ini).
+  #   Repo asal         : https://github.com/woblerr/docker-greenplum (build script/Dockerfile)
+  #                       https://hub.docker.com/r/woblerr/greenplum (image publik)
+  # greenplum:
+  #   image: woblerr/greenplum:6.26.4
+  #   container_name: greenplum
+  #   hostname: greenplum
+  #   networks:
+  #     - cdc-gp_net
+  #   environment:
+  #     GREENPLUM_PASSWORD: WhpgPass123
+  #     GREENPLUM_DATABASE_NAME: cutidev_gp
+  #     GREENPLUM_DEPLOYMENT: singlenode
+  #   ports:
+  #     - "127.0.0.1:15434:5432"
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD-SHELL",
+  #         "/usr/local/greenplum-db/bin/pg_isready -U gpadmin -d cutidev_gp",
+  #       ]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 30
+  #     start_period: 120s
+  #   volumes:
+  #     - greenplum-data:/data
+
+  dashboard:
+    build:
+      context: ./helper/dashboard
+    container_name: dashboard
+    networks:
+      - cdc-gp_net
+    ports:
+      - "127.0.0.1:8090:8080"
+    environment:
+      TZ: Asia/Jakarta
+      DB_BACKEND: postgres
+
+      # Di dashboard, PG_* menunjuk ke TARGET - beda dari cdc-service.
+      PG_HOST: ${TARGET_HOST}
+      PG_PORT: ${TARGET_PORT}
+      PG_USER: ${TARGET_USER}
+      PG_PASSWORD: ${TARGET_PASSWORD}
+      PG_DATABASE: ${TARGET_DB}
+      PG_SCHEMA: ${TARGET_SCHEMA}
+      ENABLE_DELETED_LOG: "false"
+
+      SOURCE_PG_HOST: ${SOURCE_HOST}
+      SOURCE_PG_PORT: ${SOURCE_PORT}
+      SOURCE_PG_DATABASE: ${SOURCE_DB}
+      SOURCE_PG_USER: ${SOURCE_USER}
+      SOURCE_PG_PASSWORD: ${SOURCE_PASSWORD}
+      SOURCE_SLOT_NAME: ${SOURCE_SLOT_NAME}
+    volumes:
+      - ./helper/dashboard/static:/app/static
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+volumes:
+  kafka-data:
+  greenplum-data:

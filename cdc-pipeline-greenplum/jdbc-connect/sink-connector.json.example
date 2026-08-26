@@ -1,0 +1,20 @@
+{
+  "name": "greenplum-gp-poc-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "topics": "cutidev.public.leave_leavedocument,cutidev.public.leave_historyleave,cutidev.public.account_user",
+    "connection.url": "jdbc:postgresql://<HOST_GREENPLUM>:6432/<NAMA_DATABASE>",
+    "connection.user": "<USER>",
+    "connection.password": "<PASSWORD>",
+    "insert.mode": "insert",
+    "auto.create": "true",
+    "auto.evolve": "true",
+    "table.name.format": "<SCHEMA>.stg_${topic}",
+    "delete.enabled": "false",
+    "transforms": "stripPrefix",
+    "transforms.stripPrefix.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.stripPrefix.regex": "cutidev\\.public\\.(.*)",
+    "transforms.stripPrefix.replacement": "$1"
+  }
+}

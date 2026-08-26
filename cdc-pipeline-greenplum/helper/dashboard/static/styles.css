@@ -1,0 +1,303 @@
+/* Palet & komponen meniru django.contrib.admin default theme */
+
+:root {
+  --primary: #417690;
+  --secondary: #79aec8;
+  --accent: #f5dd5d;
+  --body-bg: #fff;
+  --page-bg: #f5f5f5;
+  --body-fg: #333;
+  --body-quiet: #666; /* FIXED: Diisi warna hex abu-abu */
+  --hairline: #e8e8e8;
+  --border: #ccc;
+  --darkened-bg: #f8f8f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Kontainer Utama Overlay */
+#loading-overlay {
+  position: fixed; /* Tetap di posisi meskipun di-scroll */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.85); /* Putih semi-transparan */
+  z-index: 9999; /* Pastikan berada di paling atas elemen lain */
+  display: flex; /* Gunakan flexbox untuk memposisikan konten di tengah */
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s ease-out; /* Animasi halus saat muncul/hilang */
+}
+
+/* Konten di dalam overlay */
+.loader-content {
+  text-align: center;
+  color: var(--primary); /* ENHANCED: Sesuaikan dengan tema Django admin */
+  font-family: "Roboto", sans-serif;
+}
+
+/* Jarak antara ikon dan teks */
+.loader-content i {
+  margin-bottom: 15px;
+  display: block;
+}
+
+/* Class untuk menyembunyikan overlay */
+#loading-overlay.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none; /* Agar tidak bisa diklik saat sembunyi */
+}
+
+body {
+  margin: 0;
+  font-family: "Roboto", "Segoe UI", Arial, sans-serif;
+  background: var(--page-bg);
+  color: var(--body-fg);
+  font-size: 14px;
+}
+
+/* ── Header ───────────────────────────── */
+#header {
+  background: var(--primary);
+  color: var(--accent);
+  padding: 12px 24px;
+}
+
+#branding h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.breadcrumbs {
+  background: var(--secondary);
+  color: #e4f1f7;
+  padding: 10px 24px;
+  font-size: 13px;
+}
+
+.breadcrumbs a {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.breadcrumbs a:hover {
+  color: var(--accent);
+}
+
+/* ── Content ─────────────────────────────────────────────────────────── */
+#content {
+  padding: 24px 32px;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+.row.stat-row {
+  margin-bottom: 16px;
+}
+.col-stat {
+  flex: 1;
+}
+
+.module {
+  background: var(--body-bg);
+  border: 1px solid var(--hairline);
+  margin-bottom: 16px;
+}
+
+.module h2 {
+  margin: 0;
+  background: #e4e4e4;
+  color: var(--body-fg); /* FIXED: Menggantikan #black yang invalid */
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+}
+
+.module h2 i {
+  margin-right: 2px;
+}
+
+.module-body {
+  padding: 16px;
+}
+.module-body.no-pad {
+  padding: 0;
+}
+
+.stat-tile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 0;
+}
+
+.stat-icon {
+  flex: 0 0 auto;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  color: #000;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon-alt {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--body-quiet);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.big-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--body-fg);
+  line-height: 1.1;
+}
+
+/* Chip row: status minggu ini */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--darkened-bg);
+  border: 1px solid var(--hairline);
+  padding: 8px 12px;
+}
+
+.chip-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--body-fg);
+}
+
+/* ── Tabel ala #result_list Django changelist ───────────────────────── */
+table#result_list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+table#result_list thead th {
+  background: var(--darkened-bg);
+  color: var(--body-quiet);
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+table#result_list td {
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: middle;
+}
+
+table#result_list tbody tr:nth-child(odd) {
+  background: #fff;
+}
+table#result_list tbody tr:nth-child(even) {
+  background: var(--darkened-bg);
+}
+table#result_list tbody tr:hover {
+  background: #ffffe1;
+}
+
+/* Badge status */
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 2px;
+  color: #fff;
+}
+.label-default {
+  background: #999;
+}
+.label-info {
+  background: var(--secondary);
+}
+.label-primary {
+  background: #447e9b;
+}
+.label-danger {
+  background: #ba2121;
+}
+.label-success {
+  background: #4caf50;
+}
+
+.text-muted {
+  color: var(--body-quiet);
+}
+
+@media (max-width: 767px) {
+  .row.stat-row {
+    flex-direction: column;
+  }
+}
+
+/* ── Panel kesehatan pipeline & log container ───────────────────────── */
+.log-box {
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-family: Consolas, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+  height: 420px;
+  max-width: 100%;
+  width: 100%;
+  overflow: auto;
+  white-space: pre;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.log-tab {
+  background: var(--darkened-bg);
+  border: 1px solid var(--hairline);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.log-tab:hover {
+  background: #ffffe1;
+}
+.log-tab-active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}

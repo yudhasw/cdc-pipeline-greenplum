@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Real-Time Dashboard Cuti</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="loading-overlay" class="hidden">
+    <div class="loader-content">
+      <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>
+      <span class="sr-only">Loading...</span>
+      <p>Memuat data...</p>
+    </div>
+  </div>
+
+  <div id="header">
+    <div id="branding">
+      <h1><i class="fa fa-bar-chart"></i>&nbsp; CDC Development - Dashboard</h1>
+    </div>
+  </div>
+
+  <div class="breadcrumbs"><a href="index.html">Dashboard</a> &rsaquo; <a href="pipeline.html">Pipeline CDC</a></div>
+
+  <div id="content">
+
+    <div class="row stat-row">
+      <div class="col-stat">
+        <div class="module stat-tile">
+          <div class="stat-icon"><i class="fa fa-users"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">Jumlah Karyawan Aktif</div>
+            <div class="big-number" id="stat-employees">&ndash;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-stat">
+        <div class="module stat-tile">
+          <div class="stat-icon stat-icon-alt"><i class="fa fa-calendar-check-o"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">Pengajuan Cuti Minggu Ini</div>
+            <div class="big-number" id="stat-week-count">&ndash;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="module">
+      <h2><i class="fa fa-tasks"></i>&nbsp;Status Pengajuan Minggu Ini</h2>
+      <div class="module-body">
+        <div id="card-week-status" class="chip-row"></div>
+      </div>
+    </div>
+
+    <div class="module">
+      <h2><i class="fa fa-clock-o"></i>&nbsp;10 Perubahan Dokumen Cuti Terbaru</h2>
+      <div class="module-body no-pad">
+        <table id="result_list">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Karyawan</th>
+              <th scope="col">Document type</th>
+              <th scope="col">Status</th>
+              <th scope="col">Alasan cuti</th>
+              <th scope="col">Periode cuti</th>
+              <th scope="col">Diperbarui</th>
+            </tr>
+          </thead>
+          <tbody id="table-latest"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- <div class="module">
+      <h2><i class="fa fa-trash-o"></i>&nbsp;5 Data Terakhir Dokumen Cuti Dihapus</h2>
+      <div class="module-body no-pad">
+        <table id="result_list">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Karyawan</th>
+              <th scope="col">Document type</th>
+              <th scope="col">Status</th>
+              <th scope="col">Dihapus</th>
+            </tr>
+          </thead>
+          <tbody id="table-deleted"></tbody>
+        </table>
+      </div>
+    </div> -->
+
+    <div class="module">
+      <h2><i class="fa fa-trash-o"></i>&nbsp;10 Akun Terbaru</h2>
+      <div class="module-body no-pad">
+        <table id="result_list">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Karyawan</th>
+              <th scope="col">Level</th>
+              <th scope="col">Unit Kerja</th>
+            </tr>
+          </thead>
+          <tbody id="table-new-accounts"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

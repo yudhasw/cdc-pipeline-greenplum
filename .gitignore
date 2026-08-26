@@ -1,0 +1,54 @@
+# ============================================================
+# KREDENSIAL - jangan pernah di-commit
+# ============================================================
+.env
+*.env
+!*.env.example
+
+# Berkas konfigurasi connector memuat kredensial basis data secara
+# langsung (Kafka Connect tidak membaca .env). Yang di-commit hanya
+# templatnya; berkas aslinya dibuat manual saat deployment.
+cdc-pipeline-greenplum/debezium-connect/postgres-connector.json
+cdc-pipeline-greenplum/jdbc-connect/sink-connector.json
+
+# Sisa repositori git lama (riwayatnya memuat kredensial)
+.git-lama-BACKUP/
+
+# ============================================================
+# Folder yang belum ikut dipublikasikan
+# Hapus barisnya bila sudah siap dimasukkan ke repo.
+# ============================================================
+cdc-pipeline/
+cdc-pipeline-clickhouse/
+infraco-cutionline/
+Dokumentasi Proses/
+
+# docker-compose milik infraco-cutionline (memuat kredensial basis data).
+# Garis miring di depan mengunci pola ini HANYA ke berkas di akar repo,
+# supaya docker-compose.yml milik cdc-pipeline-greenplum tetap ikut ter-commit.
+/docker-compose.yml
+
+# ============================================================
+# Artefak lokal - hasil pengujian, bukan kode sumber
+# ============================================================
+cdc-pipeline-greenplum/helper/testing/*.csv
+cdc-pipeline-greenplum/helper/testing/*.png
+cdc-pipeline-greenplum/*.csv
+cdc-pipeline-greenplum/hasil*.csv
+
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ============================================================
+# Berkas sementara sistem operasi & editor
+# ============================================================
+Thumbs.db
+.DS_Store
+~$*.docx
+~$*.xlsx
